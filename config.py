@@ -4,7 +4,7 @@ from decouple import config
 if DATABASE_URI.startswith("postgres://"):
     DATABASE_URI = DATABASE_URI.replace("postgres://", "postgresql://", 1)"""
 
-db_url = 'tfg-db:5432'
+db_url = 'tfg-postgres-db:5432'
 db_name = 'tfg-db'
 db_user = 'postgres'
 db_password = 'pass'

@@ -6,6 +6,13 @@ from src import app, db
 
 cli = FlaskGroup(app)
 
+@cli.command("create_all")
+def create_all():
+    """
+    Creates all database relations
+    """
+    db.create_all()
+
 @cli.command("create_admin")
 def create_admin():
     """Creates an admin user
@@ -26,11 +33,13 @@ def create_admin():
             password=password,
             role=10,
             is_admin=True,
-            created_by="CLI"
+            created_by="CLI",
+            last_modified_by="CLI",
         )
         db.session.add(user)
         db.session.commit()
-    except Exception:
+    except Exception as e:
+        print(e)
         print("Couldn't create admin user")
 
 
