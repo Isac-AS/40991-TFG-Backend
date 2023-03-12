@@ -60,31 +60,8 @@ def get_csrf():
     response.headers.set("X-CSRFToken", token)
     return response
 
-
-def run_subprocess():
-    env = {'PATH': './strategies_implementations/whisper-venv/bin'}
-    
-    file_path = '/opt/40991-TFG-Isac/backend/src/strategies_implementations/whisper/whisper.py'
-    arg1 = '../recordings/test_recording_0.wav'
-    serialized_data = pickle.dumps(arg1)
-    #process = subprocess.Popen(['/opt/40991-TFG-Isac/backend/src/strategies_implementations/whisper/whisper.py', arg1], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    process = subprocess.Popen([
-        '/opt/40991-TFG-Isac/backend/src/strategies_implementations/whisper/whisper-venv/bin/python',
-        '/opt/40991-TFG-Isac/backend/src/strategies_implementations/whisper/whisper.py',
-        arg1],
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    # Esperar a que el proceso termine
-    stdout, stderr = process.communicate()
-    # Imprimir la salida del programa
-    print(stdout.decode('utf-8'))
-    print(stderr.decode('utf-8'))
-    return None
-
-
-
 # Testing area 
 from src.pipelines.models import Pipeline
-from src.pipelines.views import get_all_pipelines
 @app.route("/api/test", methods=["GET", "POST"])
 def random_testing():
     #db.create_all()
@@ -106,4 +83,27 @@ def pipeline_testing():
     )
     db.session.add(pipeline)
     db.session.commit()
+    return None
+
+# Example subprocess run
+def run_subprocess():
+    #env = {'PATH': './strategies_implementations/whisper-venv/bin'}
+    strategy_name = "whisper"
+    file_path = f'/opt/40991-TFG-Backend/src/strategies_implementations/{strategy_name}-strategy/{strategy_name}-strategy.py'
+    env_path = f'/opt/40991-TFG-Backend/src/strategies_implementations/{strategy_name}-strategy/{strategy_name}-venv/bin/python'
+    recording_filename = "recording.wav"
+    recording_path = f"/opt/40991-TFG-Backend/recordings/{recording_filename}"
+    arg1 = recording_path
+    #serialized_data = pickle.dumps(arg1)
+    #process = subprocess.Popen(['/opt/40991-TFG-Isac/backend/src/strategies_implementations/whisper/whisper.py', arg1], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.Popen([
+        env_path,
+        file_path,
+        arg1],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    # Esperar a que el proceso termine
+    stdout, stderr = process.communicate()
+    # Imprimir la salida del programa
+    print(stdout.decode('utf-8'))
+    print(stderr.decode('utf-8'))
     return None

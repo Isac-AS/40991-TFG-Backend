@@ -1,8 +1,6 @@
 import whisper
 import logging
-import pickle
 import sys
-#from ..strategy import Strategy
 
 class WhisperSpeechToTextStrategy():
 
@@ -16,10 +14,8 @@ class WhisperSpeechToTextStrategy():
         :rtype: str
         """
         try:
-            logging.info("Starting transcription...")
             model = whisper.load_model("medium")
             result = model.transcribe(path)
-            logging.info("Finished transcribing.")
             return result["text"]
             
         except Exception as e:
@@ -28,9 +24,6 @@ class WhisperSpeechToTextStrategy():
             return "Error durante la transcripción."
 
 if __name__ == '__main__':
-    data = sys.argv[1]
-    print(data)
-    #audio_file_path = pickle.loads(data)
-    #print(audio_file_path)
-    transcription = WhisperSpeechToTextStrategy.execute(data)
+    path_to_recording = sys.argv[1]
+    transcription = WhisperSpeechToTextStrategy.execute(path_to_recording)
     print(transcription)
