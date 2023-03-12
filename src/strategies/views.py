@@ -19,6 +19,9 @@ def get_strategy():
 
 @strategies_bp.route("/strategies/create", methods=["POST"])
 def create_strategy():
+    strategy_name = request.get("name")
+    file_path = f'/opt/40991-TFG-Backend/src/strategies_implementations/{strategy_name}-strategy/{strategy_name}-strategy.py'
+    env_path = f'/opt/40991-TFG-Backend/src/strategies_implementations/{strategy_name}-strategy/{strategy_name}-venv/bin/python'
     pass
 
 @strategies_bp.route("/strategies/update", methods=["POST"])

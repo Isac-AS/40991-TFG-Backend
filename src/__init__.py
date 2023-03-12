@@ -1,11 +1,7 @@
-import pickle
 import subprocess
-import os
-import sys
-import importlib.util
 
 from decouple import config
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
@@ -66,7 +62,13 @@ from src.pipelines.models import Pipeline
 def random_testing():
     #db.create_all()
     #pipeline_testing()
-    run_subprocess()
+    #run_subprocess()
+    audio = request.files['audio']
+    audio.save(f"/opt/40991-TFG-Backend/recordings/{audio.filename}")
+    print(audio)
+
+    #print(request.json)
+    #print(request.json.get("audio"))
     return jsonify({"ping": "pong!"})
 
 def pipeline_testing():
@@ -107,3 +109,8 @@ def run_subprocess():
     print(stdout.decode('utf-8'))
     print(stderr.decode('utf-8'))
     return None
+
+class ResponseCreator:
+    @classmethod
+    def create_response(result: bool, message: str, caller:str, object: any):
+        return jsonify({'result': result, 'message': message, f'{caller}': object})

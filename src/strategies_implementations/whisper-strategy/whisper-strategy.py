@@ -1,5 +1,6 @@
 import whisper
 import logging
+import pickle
 import sys
 
 class WhisperSpeechToTextStrategy():
@@ -24,6 +25,11 @@ class WhisperSpeechToTextStrategy():
             return "Error durante la transcripción."
 
 if __name__ == '__main__':
+    # Get strategy input
     path_to_recording = sys.argv[1]
+    # Run execute command
     transcription = WhisperSpeechToTextStrategy.execute(path_to_recording)
-    print(transcription)
+    # Serialize the output
+    serialized_transcription = pickle.dumps(transcription)
+    # Return serialized output through stdout
+    print(serialized_transcription)
