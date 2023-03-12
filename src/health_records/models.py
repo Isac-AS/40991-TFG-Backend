@@ -10,14 +10,13 @@ class HealthRecord(db.Model):
     # Path to the stored recording
     recording_path = db.Column(db.String, nullable=False)
     # Result of the transcription
-    transcription =  db.Column(db.String, nullable=False)
+    transcription = db.Column(db.String, nullable=False)
     # Final health record (output of the last strategy)
     health_record = db.Column(db.String, unique=False, nullable=False)
     # All the outputs of the strategies run
     processing_outputs = db.Column(db.JSON, nullable=False)
     # In case NER was used, this column will serve as an easy way later to represent the NER
     named_entity_recognition = db.Column(db.JSON)
-
 
     # Additional data
     id = db.Column(db.Integer, primary_key=True)
@@ -40,7 +39,7 @@ class HealthRecord(db.Model):
 
     def __repr__(self):
         return f"Result: {self.health_record}\nDone by: {self.created_by}"
-    
+
     def as_dict(self):
         return {
             'recording_path': self.recording_path,

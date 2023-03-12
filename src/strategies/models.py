@@ -8,12 +8,12 @@ class Strategy(db.Model):
 
     # Pipeline specific fields
     name = db.Column(db.String, nullable=False)
-    description =  db.Column(db.String, nullable=False)
-    python_file_path =  db.Column(db.String, nullable=False)
-    env_path =  db.Column(db.String, nullable=False)
-    input_type =  db.Column(db.String, nullable=False)
-    output_type =  db.Column(db.String, nullable=False)
-    stage =  db.Column(db.String, nullable=False)
+    description = db.Column(db.String, nullable=False)
+    python_file_path = db.Column(db.String, nullable=False)
+    env_path = db.Column(db.String, nullable=False)
+    input_type = db.Column(db.String, nullable=False)
+    output_type = db.Column(db.String, nullable=False)
+    stage = db.Column(db.String, nullable=False)
 
     # Additional data
     id = db.Column(db.Integer, primary_key=True)
@@ -38,7 +38,7 @@ class Strategy(db.Model):
 
     def __repr__(self):
         return f"Name: {self.name}\nDone by: {self.created_by}"
-    
+
     def as_dict(self):
         return {
             'name': self.name,
