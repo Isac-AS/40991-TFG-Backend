@@ -3,6 +3,7 @@ import logging
 import pickle
 import sys
 
+
 class WhisperSpeechToTextStrategy():
 
     @classmethod
@@ -18,11 +19,12 @@ class WhisperSpeechToTextStrategy():
             model = whisper.load_model("medium")
             result = model.transcribe(path)
             return result["text"]
-            
+
         except Exception as e:
             logging.error("Error while attempting transcription.")
             logging.error(e)
             return "Error durante la transcripción."
+
 
 if __name__ == '__main__':
     # Get strategy input
