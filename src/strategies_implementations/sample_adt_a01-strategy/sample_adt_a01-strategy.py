@@ -96,7 +96,7 @@ class DefaultADT_A01():
         ner_as_str += f"\n\nIdentified names:\n{names}"
         output_as_str = f"\nElectronic health record:\n{message.to_er7(trailing_children=True)}\n\nNamed-entity recognition:\n{ner_as_str}\n\n"
         output_as_dict = {
-            'ehr': message.to_er7(trailing_children=True),
+            'output': message.to_er7(trailing_children=True),
             'ner': [
                 {
                     'name': 'clinical',
@@ -211,4 +211,4 @@ if __name__ == '__main__':
     # Serialize the output
     serialized_output = pickle.dumps(strategy_output)
     # Return serialized output through stdout
-    print(serialized_output)
+    sys.stdout.buffer.write(serialized_output)

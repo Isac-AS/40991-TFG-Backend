@@ -14,15 +14,25 @@ testing_bp = Blueprint("testing", __name__)
 
 @testing_bp.route("/api/test", methods=["GET", "POST"])
 def random_testing():
-    # db.create_all()
-    # pipeline_testing()
-    # run_subprocess()
-    audio = request.files['audio']
-    audio.save(f"/opt/40991-TFG-Backend/recordings/{audio.filename}")
-    print(audio)
+    strategy_input = "Posible texto en español con faltas de ortografia como no ponel tildes y demas"
+    strategy: Strategy = db.session.execute(
+        db.select(Strategy).filter_by(id=2)).scalar_one()
+    process = subprocess.Popen([strategy.env_path, strategy.python_file_path,
+                               strategy_input], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    
+    stdout, stderr = process.communicate()
+    # Get the output
+    serialized_output = stdout.strip()
+    print(f'\nStdout:\n{stdout}\n\nSerialized output:\n{serialized_output}\n')
+    strategy_output = pickle.loads(serialized_output)
+    print(f'Strategy output: {strategy_output}')
 
-    # print(request.json)
-    # print(request.json.get("audio"))
+    diccionario = {'output': 'la verdad es que este es un diccionario de prueba'}
+    diccionario_serializado = pickle.dumps(diccionario)
+    print(f'Diccionario:\n{diccionario}\nDiccionario serializado:\n{diccionario_serializado}')
+    diccionario_deserializado = pickle.loads(diccionario_serializado)
+    print(f'Diccionario deserializado:\n{diccionario_deserializado}')
+
     return jsonify({"ping": "pong!"})
 
 
@@ -47,12 +57,12 @@ def reset_database():
 
 @testing_bp.route("/api/test/add_strategy", methods=["GET", "POST"])
 def add_strategy():
-    strategy_name = "pyspellchecker"
+    """strategy_name = "pyspellchecker"
     description = "Estrategia empleada para corregir posibles errores ortográficos de la transcripción"
     file_path = f'/opt/40991-TFG-Backend/src/strategies_implementations/{strategy_name}-strategy/{strategy_name}-strategy.py'
     env_path = f'/opt/40991-TFG-Backend/src/strategies_implementations/{strategy_name}-strategy/{strategy_name}-venv/bin/python'
     strategy = Strategy(name=strategy_name, description=description, env_path=env_path, python_file_path=file_path, input_type="string", output_type="string",
-                        created_by="admin", last_modified_by="admin", stage="Intermedia")
+                        created_by="admin", last_modified_by="admin", stage="Intermedia")"""
     """strategy_name = "sample_adt_a01"
     description = "Estrategia de ejemplo para crear una historia clínica electrónica"
     file_path = f'/opt/40991-TFG-Backend/src/strategies_implementations/{strategy_name}-strategy/{strategy_name}-strategy.py'
@@ -65,8 +75,8 @@ def add_strategy():
     env_path = f'/opt/40991-TFG-Backend/src/strategies_implementations/{strategy_name}-strategy/{strategy_name}-venv/bin/python'
     strategy = Strategy(name=strategy_name, description=description, env_path=env_path, python_file_path=file_path, input_type="string", output_type="string",
                         created_by="admin", last_modified_by="admin", stage="Voz a texto")"""
-    db.session.add(strategy)
-    db.session.commit()
+    """db.session.add(strategy)
+    db.session.commit()"""
     return jsonify({"ping": "pong!"})
 
 

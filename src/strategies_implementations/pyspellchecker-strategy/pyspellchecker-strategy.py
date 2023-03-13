@@ -19,7 +19,7 @@ class UsingPySpellChecker():
         spanish_spell_checker = SpellChecker(language="es")
         spell_checked_text = " ".join(
             [spanish_spell_checker.correction(token) for token in text.split()])
-        return spell_checked_text
+        return {'output': spell_checked_text}
 
 
 if __name__ == '__main__':
@@ -30,4 +30,4 @@ if __name__ == '__main__':
     # Serialize the output
     serialized_output = pickle.dumps(strategy_output)
     # Return serialized output through stdout
-    print(serialized_output)
+    sys.stdout.buffer.write(serialized_output)

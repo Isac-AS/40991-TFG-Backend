@@ -44,9 +44,13 @@ def create_health_record_from_audio():
     pipeline_id = request.json.get("pipeline_id")
     audio_file_path = request.json.get("audio_file_path")
 
-    # pipeline_output = run_pipeline(pipeline_id=pipeline_id, skip_steps=0,strategy_input=audio_file_path)
+    pipeline_output = run_pipeline(pipeline_id=pipeline_id, skip_steps=0,strategy_input=audio_file_path)
+    print("\nPipeline output:")
+    print(pipeline_output)
 
-    return jsonify({'result': True, 'message': "Registro creado con éxito", "healthRecord": None})
+    response = jsonify(
+        {'result': True, 'message': '¡Registro creado con éxito!', 'healthRecord': None})
+    return response
 
 
 @health_record_bp.route("/health_records/save_audio", methods=["POST"])
@@ -80,7 +84,10 @@ def create_health_record_from_record():
     pipeline_id = request.json.get("pipeline_id")
 
     pipeline_output = run_pipeline(pipeline_id, skip_steps, strategy_input)
-    pass
+
+    response = jsonify(
+        {'result': True, 'message': '¡Registro creado con éxito!', 'healthRecord': None})
+    return response
 
 
 @health_record_bp.route("/health_records/update", methods=["POST"])
@@ -111,12 +118,23 @@ def run_pipeline(pipeline_id, skip_steps, strategy_input):
     # Step skipping
     strategies_to_run = pipeline.strategies[skip_steps:]
     # Get first input
-    pipeline_output = {}
+    pipeline_output = []
     for strategy in strategies_to_run:
+        # Run strategy
         strategy_output = run_strategy(
             strategy_input=strategy_input, strategy_id=strategy["id"])
-        pipeline_output[strategy["name"]] = strategy_output
-        strategy_input = strategy_output
+        
+        # Build output dict
+        current_output = {
+            'strategy_id': strategy["id"],
+            'strategy_name': strategy["name"],
+            'output': strategy_output,
+        }
+        # Add output dict to the pipeline output
+        pipeline_output.append(current_output)
+
+        # Prepare current output as next input
+        strategy_input = strategy_output['output']
     return pipeline_output
 
 

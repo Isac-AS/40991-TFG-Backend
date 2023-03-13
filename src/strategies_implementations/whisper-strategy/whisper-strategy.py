@@ -18,7 +18,7 @@ class WhisperSpeechToTextStrategy():
         try:
             model = whisper.load_model("medium")
             result = model.transcribe(path)
-            return result["text"]
+            return {'output': result["text"]}
 
         except Exception as e:
             logging.error("Error while attempting transcription.")
@@ -28,10 +28,10 @@ class WhisperSpeechToTextStrategy():
 
 if __name__ == '__main__':
     # Get strategy input
-    path_to_recording = sys.argv[1]
+    strategy_input = sys.argv[1]
     # Run execute command
-    transcription = WhisperSpeechToTextStrategy.execute(path_to_recording)
+    strategy_output = WhisperSpeechToTextStrategy.execute(strategy_input)
     # Serialize the output
-    serialized_transcription = pickle.dumps(transcription)
+    serialized_output = pickle.dumps(strategy_output)
     # Return serialized output through stdout
-    print(serialized_transcription)
+    sys.stdout.buffer.write(serialized_output)
