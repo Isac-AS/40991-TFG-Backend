@@ -1,5 +1,7 @@
 import pickle
 import subprocess
+import sys
+import traceback
 from flask import Blueprint, jsonify, request
 from datetime import datetime
 
@@ -14,25 +16,7 @@ testing_bp = Blueprint("testing", __name__)
 
 @testing_bp.route("/api/test", methods=["GET", "POST"])
 def random_testing():
-    strategy_input = "Posible texto en español con faltas de ortografia como no ponel tildes y demas"
-    strategy: Strategy = db.session.execute(
-        db.select(Strategy).filter_by(id=2)).scalar_one()
-    process = subprocess.Popen([strategy.env_path, strategy.python_file_path,
-                               strategy_input], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     
-    stdout, stderr = process.communicate()
-    # Get the output
-    serialized_output = stdout.strip()
-    print(f'\nStdout:\n{stdout}\n\nSerialized output:\n{serialized_output}\n')
-    strategy_output = pickle.loads(serialized_output)
-    print(f'Strategy output: {strategy_output}')
-
-    diccionario = {'output': 'la verdad es que este es un diccionario de prueba'}
-    diccionario_serializado = pickle.dumps(diccionario)
-    print(f'Diccionario:\n{diccionario}\nDiccionario serializado:\n{diccionario_serializado}')
-    diccionario_deserializado = pickle.loads(diccionario_serializado)
-    print(f'Diccionario deserializado:\n{diccionario_deserializado}')
-
     return jsonify({"ping": "pong!"})
 
 
@@ -57,25 +41,27 @@ def reset_database():
 
 @testing_bp.route("/api/test/add_strategy", methods=["GET", "POST"])
 def add_strategy():
-    """strategy_name = "pyspellchecker"
-    description = "Estrategia empleada para corregir posibles errores ortográficos de la transcripción"
-    file_path = f'/opt/40991-TFG-Backend/src/strategies_implementations/{strategy_name}-strategy/{strategy_name}-strategy.py'
-    env_path = f'/opt/40991-TFG-Backend/src/strategies_implementations/{strategy_name}-strategy/{strategy_name}-venv/bin/python'
-    strategy = Strategy(name=strategy_name, description=description, env_path=env_path, python_file_path=file_path, input_type="string", output_type="string",
-                        created_by="admin", last_modified_by="admin", stage="Intermedia")"""
-    """strategy_name = "sample_adt_a01"
-    description = "Estrategia de ejemplo para crear una historia clínica electrónica"
-    file_path = f'/opt/40991-TFG-Backend/src/strategies_implementations/{strategy_name}-strategy/{strategy_name}-strategy.py'
-    env_path = f'/opt/40991-TFG-Backend/src/strategies_implementations/{strategy_name}-strategy/{strategy_name}-venv/bin/python'
-    strategy = Strategy(name=strategy_name, description=description, env_path=env_path, python_file_path=file_path, input_type="string", output_type="string",
-                        created_by="admin", last_modified_by="admin", stage="Final")"""
     """strategy_name = "whisper"
     description = "Estrategia de conversión de voz a texto usando la herramienta 'whisper' de openai"
     file_path = f'/opt/40991-TFG-Backend/src/strategies_implementations/{strategy_name}-strategy/{strategy_name}-strategy.py'
     env_path = f'/opt/40991-TFG-Backend/src/strategies_implementations/{strategy_name}-strategy/{strategy_name}-venv/bin/python'
     strategy = Strategy(name=strategy_name, description=description, env_path=env_path, python_file_path=file_path, input_type="string", output_type="string",
-                        created_by="admin", last_modified_by="admin", stage="Voz a texto")"""
-    """db.session.add(strategy)
+                        created_by="admin", last_modified_by="admin", stage="Voz a texto")
+    db.session.add(strategy)
+    strategy_name = "pyspellchecker"
+    description = "Estrategia empleada para corregir posibles errores ortográficos de la transcripción"
+    file_path = f'/opt/40991-TFG-Backend/src/strategies_implementations/{strategy_name}-strategy/{strategy_name}-strategy.py'
+    env_path = f'/opt/40991-TFG-Backend/src/strategies_implementations/{strategy_name}-strategy/{strategy_name}-venv/bin/python'
+    strategy = Strategy(name=strategy_name, description=description, env_path=env_path, python_file_path=file_path, input_type="string", output_type="string",
+                        created_by="admin", last_modified_by="admin", stage="Intermedia")
+    db.session.add(strategy)
+    strategy_name = "sample_adt_a01"
+    description = "Estrategia de ejemplo para crear una historia clínica electrónica"
+    file_path = f'/opt/40991-TFG-Backend/src/strategies_implementations/{strategy_name}-strategy/{strategy_name}-strategy.py'
+    env_path = f'/opt/40991-TFG-Backend/src/strategies_implementations/{strategy_name}-strategy/{strategy_name}-venv/bin/python'
+    strategy = Strategy(name=strategy_name, description=description, env_path=env_path, python_file_path=file_path, input_type="string", output_type="string",
+                        created_by="admin", last_modified_by="admin", stage="Final")
+    db.session.add(strategy)
     db.session.commit()"""
     return jsonify({"ping": "pong!"})
 
@@ -110,6 +96,97 @@ def pipeline_testing():
     db.session.commit()
     return None
 
+@testing_bp.route("/api/test/add_example_ehr", methods=["GET", "POST"])
+def add_example_ehr():
+
+    pipeline_output = [{'output': {'output': 'ejemplo'}}]
+
+    new_record = HealthRecord (
+        recording_path='audio_file_path',
+        transcription=pipeline_output[0]['output'],
+        health_record=pipeline_output[-1]['output'],
+        processing_outputs=pipeline_output,
+        created_by=current_user.username,
+        last_modified_by=current_user.username
+    )
+    db.session.add(new_record)
+    db.session.commit()
+    return jsonify({"ping": "pong!"})
+
+@testing_bp.route("/api/test/test_s2t_strategy", methods=["GET", "POST"])
+def test_speech_to_text_strategy():
+    strategy_input = "/opt/40991-TFG-Backend/recordings/admin0_audio_1678736510830.wav"
+    strategy_id = 1
+    # Get strategy information from the database
+    strategy: Strategy = db.session.execute(
+        db.select(Strategy).filter_by(id=strategy_id)).scalar_one()
+    print(f"\n[DEBUG] - Current strategy:\n{strategy.as_dict()}")
+    print(f"\n[DEBUG] - Strategy input:\n{strategy_input}")
+    # Run strategy as subprocess
+    process = subprocess.Popen([strategy.env_path, strategy.python_file_path,
+                               strategy_input], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    # Wait for the process to finish
+    stdout, stderr = process.communicate()
+    # Get the output
+    serialized_output = stdout.strip()
+    print(f"\n[DEBUG] - Serialized output:\n{serialized_output}")
+    try:
+        strategy_output = pickle.loads(serialized_output)
+    except Exception:
+        print(traceback.print_exc())
+        strategy_output = {'output': 'Error durante esta estrategia'}
+    print(f"\n[DEBUG] - Strategy output:\n{strategy_output}")
+    return jsonify({"ping": "pong!"})
+
+@testing_bp.route("/api/test/spell_checking_strategy", methods=["GET", "POST"])
+def test_spell_check():
+    strategy_input = "Posible texto en español con faltas de ortografia como no ponel tildes y demas"
+    strategy_id = 2
+    # Get strategy information from the database
+    strategy: Strategy = db.session.execute(
+        db.select(Strategy).filter_by(id=strategy_id)).scalar_one()
+    print(f"\n[DEBUG] - Current strategy:\n{strategy.as_dict()}")
+    print(f"\n[DEBUG] - Strategy input:\n{strategy_input}")
+    # Run strategy as subprocess
+    process = subprocess.Popen([strategy.env_path, strategy.python_file_path,
+                               strategy_input], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    # Wait for the process to finish
+    stdout, stderr = process.communicate()
+    # Get the output
+    serialized_output = stdout.strip()
+    print(f"\n[DEBUG] - Serialized output:\n{serialized_output}")
+    try:
+        strategy_output = pickle.loads(serialized_output)
+    except Exception:
+        print(traceback.print_exc())
+        strategy_output = {'output': 'Error durante esta estrategia'}
+    print(f"\n[DEBUG] - Strategy output:\n{strategy_output}")
+    return jsonify({"ping": "pong!"})
+
+@testing_bp.route("/api/test/test_default_ehr", methods=["GET", "POST"])
+def test_default_adt_a01():
+    strategy_input = "Juan fue a la consulta con dolor de cabeza náusea y diarrea Se la recetó para ese tamil"
+    strategy_id = 3
+    # Get strategy information from the database
+    strategy: Strategy = db.session.execute(
+        db.select(Strategy).filter_by(id=strategy_id)).scalar_one()
+    print(f"\n[DEBUG] - Current strategy:\n{strategy.as_dict()}")
+    print(f"\n[DEBUG] - Strategy input:\n{strategy_input}")
+    # Run strategy as subprocess
+    process = subprocess.Popen([strategy.env_path, strategy.python_file_path,
+                               strategy_input], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    # Wait for the process to finish
+    stdout, stderr = process.communicate()
+    # Get the output
+    serialized_output = stdout.strip()
+    print(f"\n[DEBUG] - Serialized output:\n{serialized_output}")
+    try:
+        strategy_output = pickle.loads(serialized_output)
+    except Exception:
+        print(traceback.print_exc())
+        strategy_output = {'output': 'Error durante esta estrategia'}
+    print(f"\n[DEBUG] - Strategy output:\n{strategy_output}")
+    return jsonify({"ping": "pong!"})
 
 def run_subprocess():
     # env = {'PATH': './strategies_implementations/whisper-venv/bin'}
@@ -131,4 +208,23 @@ def run_subprocess():
     # Imprimir la salida del programa
     print(stdout.decode('utf-8'))
     print(stderr.decode('utf-8'))
+
+    strategy_input = "Posible texto en español con faltas de ortografia como no ponel tildes y demas"
+    strategy: Strategy = db.session.execute(
+        db.select(Strategy).filter_by(id=2)).scalar_one()
+    process = subprocess.Popen([strategy.env_path, strategy.python_file_path,
+                               strategy_input], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    
+    stdout, stderr = process.communicate()
+    # Get the output
+    serialized_output = stdout.strip()
+    print(f'\nStdout:\n{stdout}\n\nSerialized output:\n{serialized_output}\n')
+    strategy_output = pickle.loads(serialized_output)
+    print(f'Strategy output: {strategy_output}')
+
+    diccionario = {'output': 'la verdad es que este es un diccionario de prueba'}
+    diccionario_serializado = pickle.dumps(diccionario)
+    print(f'Diccionario:\n{diccionario}\nDiccionario serializado:\n{diccionario_serializado}')
+    diccionario_deserializado = pickle.loads(diccionario_serializado)
+    print(f'Diccionario deserializado:\n{diccionario_deserializado}')
     return None

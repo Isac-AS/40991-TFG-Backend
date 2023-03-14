@@ -1,5 +1,8 @@
+import json
 import pickle
 import subprocess
+import sys
+import traceback
 from flask import Blueprint, jsonify, request
 from datetime import datetime
 
@@ -10,6 +13,8 @@ from src.pipelines.models import Pipeline
 from src.strategies.models import Strategy
 
 health_record_bp = Blueprint("health_records", __name__)
+
+debug = True
 
 
 @health_record_bp.route("/health_records/get_all", methods=["GET"])
@@ -41,15 +46,46 @@ def create_health_record_from_audio():
     :return: Standard response
     :rtype: http_response
     """
+    # Request information extraction
     pipeline_id = request.json.get("pipeline_id")
     audio_file_path = request.json.get("audio_file_path")
 
-    pipeline_output = run_pipeline(pipeline_id=pipeline_id, skip_steps=0,strategy_input=audio_file_path)
-    print("\nPipeline output:")
-    print(pipeline_output)
+    # Run the pipeline to create the record
+    pipeline_output = run_pipeline(
+        pipeline_id=pipeline_id, skip_steps=0, strategy_input=audio_file_path)
+    try:
+        a = 1
+        # pipeline_output = run_pipeline(
+        # pipeline_id=pipeline_id, skip_steps=0, strategy_input=audio_file_path)
+    except Exception as e:
+        print(e)
+        return jsonify(
+            {'result': False, 'message': '¡Error durante el procesamiento del pipeline!', 'healthRecord': None})
+
+    # Create the record object. As it is a new record from audio, it is assumed
+    # that the first output is the transcription and the last output the EHR.
+    new_record = HealthRecord(
+        recording_path=audio_file_path,
+        transcription=pipeline_output[0]['strategy_output']['output'],
+        health_record=pipeline_output[-1]['strategy_output']['output'],
+        processing_outputs=pipeline_output,
+        created_by=current_user.username,
+        last_modified_by=current_user.username
+    )
+
+    try:
+        db.session.add(new_record)
+        db.session.commit()
+    except:
+        print(traceback.print_exc())
+        print("\nPipeline output:")
+        print(pipeline_output)
+        print(json.dumps(pipeline_output))
+        return jsonify(
+            {'result': False, 'message': '¡Error durante el acceso a la base de datos!', 'healthRecord': None})
 
     response = jsonify(
-        {'result': True, 'message': '¡Registro creado con éxito!', 'healthRecord': None})
+        {'result': True, 'message': '¡Registro creado con éxito!', 'healthRecord': new_record.as_dict()})
     return response
 
 
@@ -97,7 +133,18 @@ def update_health_record():
 
 @health_record_bp.route("/health_records/delete", methods=["POST"])
 def delete_health_record():
-    pass
+    # Get record id from the request
+    record_id = request.json.get('id')
+    # Find the pipeline in the database
+    record: HealthRecord = db.session.execute(
+        db.select(HealthRecord).filter_by(id=record_id)).scalar_one()
+    # Delete the pipeline
+    db.session.delete(record)
+    db.session.commit()
+
+    response = jsonify(
+        {'result': True, 'message': f'Pipeline "{record.id}" eliminado con éxito.', 'pipeline': None})
+    return response
 
 
 def run_pipeline(pipeline_id, skip_steps, strategy_input):
@@ -107,7 +154,7 @@ def run_pipeline(pipeline_id, skip_steps, strategy_input):
     :type pipeline_id: int
     :param skip_steps: Whether certain steps of the pipeline should be skipped and how many
     :type skip_steps: int
-    :param strategy_input: Input to the firs strategy run
+    :param strategy_input: Input for the first strategy
     :type strategy_input: string
     :return: Dictionary with the strategy name and output
     :rtype: dict
@@ -123,12 +170,12 @@ def run_pipeline(pipeline_id, skip_steps, strategy_input):
         # Run strategy
         strategy_output = run_strategy(
             strategy_input=strategy_input, strategy_id=strategy["id"])
-        
+
         # Build output dict
         current_output = {
             'strategy_id': strategy["id"],
             'strategy_name': strategy["name"],
-            'output': strategy_output,
+            'strategy_output': strategy_output,
         }
         # Add output dict to the pipeline output
         pipeline_output.append(current_output)
@@ -151,12 +198,26 @@ def run_strategy(strategy_input, strategy_id):
     # Get strategy information from the database
     strategy: Strategy = db.session.execute(
         db.select(Strategy).filter_by(id=strategy_id)).scalar_one()
+
     # Run strategy as subprocess
     process = subprocess.Popen([strategy.env_path, strategy.python_file_path,
                                strategy_input], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     # Wait for the process to finish
     stdout, stderr = process.communicate()
     # Get the output
-    serialized_output = stdout.strip()
-    strategy_output = pickle.loads(serialized_output)
+    # serialized_output = stdout.strip()
+    serialized_output = stdout
+    try:
+        strategy_output = pickle.loads(serialized_output)
+    except Exception:
+        print(traceback.print_exc())
+        strategy_output = {'output': 'Error durante esta estrategia'}
+
+    # Print debugging info
+    if debug:
+        print(f"\n\n\n[DEBUG] - Current strategy:\n{strategy.as_dict()}")
+        print(f"\n[DEBUG] - Strategy input:\n{strategy_input}")
+        print(f"\n[DEBUG] - Stdout:\n{stdout}")
+        # print(f"\n[DEBUG] - Serialized output:\n{serialized_output}")
+        print(f"\n[DEBUG] - Strategy output:\n{strategy_output}")
     return strategy_output
