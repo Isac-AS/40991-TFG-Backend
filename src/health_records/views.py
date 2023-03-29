@@ -1,4 +1,5 @@
 import json
+import os
 import pickle
 import subprocess
 import sys
@@ -26,8 +27,39 @@ def get_all_health_records():
     return response
 
 
+@health_record_bp.route("/health_records/save_audio", methods=["POST"])
+def save_audio():
+    audio = request.files['audio']
+    audio_file_path = f"/opt/40991-TFG-Backend/recordings/{current_user.username}_{audio.filename}"
+    audio.save(audio_file_path)
+    return jsonify({'result': True, 'message': "Audio guardado correctamente", "audio_file_path": audio_file_path})
+
+
+@health_record_bp.route("/health_records/delete", methods=["POST"])
+def delete_health_record():
+    # Get record id from the request
+    record_id = request.json.get('id')
+    # Find the pipeline in the database
+    record: HealthRecord = db.session.execute(
+        db.select(HealthRecord).filter_by(id=record_id)).scalar_one()
+    # Delete the recording
+    os.remove(record.recording_path)
+    # Delete the pipeline
+    db.session.delete(record)
+    db.session.commit()
+
+    response = jsonify(
+        {'result': True, 'message': f'Pipeline "{record.id}" eliminado con éxito.', 'pipeline': None})
+    return response
+
+
 @health_record_bp.route("/health_records/read", methods=["POST"])
 def get_health_record():
+    pass
+
+
+@health_record_bp.route("/health_records/update", methods=["POST"])
+def update_health_record():
     pass
 
 
@@ -53,14 +85,6 @@ def create_health_record_from_audio():
     # Run the pipeline to create the record
     pipeline_output = run_pipeline(
         pipeline_id=pipeline_id, skip_steps=0, strategy_input=audio_file_path)
-    try:
-        a = 1
-        # pipeline_output = run_pipeline(
-        # pipeline_id=pipeline_id, skip_steps=0, strategy_input=audio_file_path)
-    except Exception as e:
-        print(e)
-        return jsonify(
-            {'result': False, 'message': '¡Error durante el procesamiento del pipeline!', 'healthRecord': None})
 
     # Create the record object. As it is a new record from audio, it is assumed
     # that the first output is the transcription and the last output the EHR.
@@ -69,6 +93,7 @@ def create_health_record_from_audio():
         transcription=pipeline_output[0]['strategy_output']['output'],
         health_record=pipeline_output[-1]['strategy_output']['output'],
         processing_outputs=pipeline_output,
+        parent_id=None,
         created_by=current_user.username,
         last_modified_by=current_user.username
     )
@@ -89,14 +114,6 @@ def create_health_record_from_audio():
     return response
 
 
-@health_record_bp.route("/health_records/save_audio", methods=["POST"])
-def save_audio():
-    audio = request.files['audio']
-    audio_file_path = f"/opt/40991-TFG-Backend/recordings/{current_user.username}_{audio.filename}"
-    audio.save(audio_file_path)
-    return jsonify({'result': True, 'message': "Audio guardado correctamente", "audio_file_path": audio_file_path})
-
-
 @health_record_bp.route("/health_records/create_from_record", methods=["POST"])
 def create_health_record_from_record():
     """API method to add a new electronic health record to the database.
@@ -114,36 +131,39 @@ def create_health_record_from_record():
     :return: Standard response
     :rtype: http_response
     """
-    parent_health_record = request.json.get("parent_health_record")
+    parent_health_record_id = request.json.get("parent_health_record_id")
+    parent_health_record_recording_path = request.json.get(
+        "parent_health_record_recording_path")
     skip_steps = request.json.get("skip_steps")
-    strategy_input = 0
+    strategy_input = request.json.get("strategy_input")
     pipeline_id = request.json.get("pipeline_id")
 
-    pipeline_output = run_pipeline(pipeline_id, skip_steps, strategy_input)
+    pipeline_output = run_pipeline(
+        pipeline_id=pipeline_id, skip_steps=skip_steps, strategy_input=strategy_input)
+
+    new_record = HealthRecord(
+        recording_path=parent_health_record_recording_path,
+        transcription=pipeline_output[0]['strategy_output']['output'],
+        health_record=pipeline_output[-1]['strategy_output']['output'],
+        processing_outputs=pipeline_output,
+        parent_id=parent_health_record_id,
+        created_by=current_user.username,
+        last_modified_by=current_user.username
+    )
+
+    try:
+        db.session.add(new_record)
+        db.session.commit()
+    except:
+        print(traceback.print_exc())
+        print("\nPipeline output:")
+        print(pipeline_output)
+        print(json.dumps(pipeline_output))
+        return jsonify(
+            {'result': False, 'message': '¡Error durante el acceso a la base de datos!', 'healthRecord': None})
 
     response = jsonify(
-        {'result': True, 'message': '¡Registro creado con éxito!', 'healthRecord': None})
-    return response
-
-
-@health_record_bp.route("/health_records/update", methods=["POST"])
-def update_health_record():
-    pass
-
-
-@health_record_bp.route("/health_records/delete", methods=["POST"])
-def delete_health_record():
-    # Get record id from the request
-    record_id = request.json.get('id')
-    # Find the pipeline in the database
-    record: HealthRecord = db.session.execute(
-        db.select(HealthRecord).filter_by(id=record_id)).scalar_one()
-    # Delete the pipeline
-    db.session.delete(record)
-    db.session.commit()
-
-    response = jsonify(
-        {'result': True, 'message': f'Pipeline "{record.id}" eliminado con éxito.', 'pipeline': None})
+        {'result': True, 'message': '¡Registro creado con éxito!', 'healthRecord': new_record.as_dict()})
     return response
 
 
@@ -206,9 +226,9 @@ def run_strategy(strategy_input, strategy_id):
     stdout, stderr = process.communicate()
     # Get the output
     # serialized_output = stdout.strip()
-    serialized_output = stdout
+    serialized_output = stdout.decode("utf-8")
     try:
-        strategy_output = pickle.loads(serialized_output)
+        strategy_output = json.loads(serialized_output)
     except Exception:
         print(traceback.print_exc())
         strategy_output = {'output': 'Error durante esta estrategia'}

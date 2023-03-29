@@ -1,3 +1,4 @@
+import json
 import pickle
 import subprocess
 import sys
@@ -34,6 +35,7 @@ def attempt_audio_save():
 
 @testing_bp.route("/api/test/reset_database", methods=["GET", "POST"])
 def reset_database():
+    #HealthRecord.__table__.drop(db.engine)
     # db.drop_all()
     # db.create_all()
     return jsonify({"ping": "pong!"})
@@ -181,7 +183,7 @@ def test_default_adt_a01():
     serialized_output = stdout.strip()
     print(f"\n[DEBUG] - Serialized output:\n{serialized_output}")
     try:
-        strategy_output = pickle.loads(serialized_output)
+        strategy_output = json.loads(serialized_output)
     except Exception:
         print(traceback.print_exc())
         strategy_output = {'output': 'Error durante esta estrategia'}

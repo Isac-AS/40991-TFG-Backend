@@ -1,4 +1,4 @@
-import pickle
+import json
 import sys
 from spellchecker import SpellChecker
 
@@ -28,6 +28,6 @@ if __name__ == '__main__':
     # Run execute command
     strategy_output = UsingPySpellChecker.execute(strategy_input)
     # Serialize the output
-    serialized_output = pickle.dumps(strategy_output)
+    serialized_output = json.dumps(strategy_output)
     # Return serialized output through stdout
-    sys.stdout.buffer.write(serialized_output)
+    print(serialized_output)
