@@ -42,8 +42,9 @@ def delete_health_record():
     # Find the pipeline in the database
     record: HealthRecord = db.session.execute(
         db.select(HealthRecord).filter_by(id=record_id)).scalar_one()
-    # Delete the recording
-    os.remove(record.recording_path)
+    # Delete the recording if it is a parent record
+    if record.parent_id is None:
+        os.remove(record.recording_path)
     # Delete the pipeline
     db.session.delete(record)
     db.session.commit()
@@ -134,6 +135,8 @@ def create_health_record_from_record():
     parent_health_record_id = request.json.get("parent_health_record_id")
     parent_health_record_recording_path = request.json.get(
         "parent_health_record_recording_path")
+    parent_health_record_transcription = request.json.get(
+        "parent_health_record_transcription")
     skip_steps = request.json.get("skip_steps")
     strategy_input = request.json.get("strategy_input")
     pipeline_id = request.json.get("pipeline_id")
@@ -143,7 +146,7 @@ def create_health_record_from_record():
 
     new_record = HealthRecord(
         recording_path=parent_health_record_recording_path,
-        transcription=pipeline_output[0]['strategy_output']['output'],
+        transcription=parent_health_record_transcription,
         health_record=pipeline_output[-1]['strategy_output']['output'],
         processing_outputs=pipeline_output,
         parent_id=parent_health_record_id,

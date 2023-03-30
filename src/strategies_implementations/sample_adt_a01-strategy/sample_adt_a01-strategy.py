@@ -87,21 +87,21 @@ class DefaultADT_A01():
         message_representation += f"\n{message.to_er7(trailing_children=True)}"
 
         # Output representation
-        ner_as_str = f"\nClinical NER:\n{str(clinical_ner_result)}"
-        ner_as_str += f"\n\nBody parts and anatomy:\n{body_parts}"
-        ner_as_str += f"\nChemical entities and pharmacological substances:\n{chem_entities}"
-        ner_as_str += f"\nPathologic conditions:\n{pathologic_conditions}"
-        ner_as_str += f"\nDiagnostic and therapeutic procedures:\n{procedures}"
-        ner_as_str += f"\n\n\nGeneric NER:\n{str(generic_ner_result)}"
-        ner_as_str += f"\n\nIdentified names:\n{names}"
-        output_as_str = f"\nElectronic health record:\n{message.to_er7(trailing_children=True)}\n\nNamed-entity recognition:\n{ner_as_str}\n\n"
+        #ner_as_str = f"\nClinical NER:\n{str(clinical_ner_result)}"
+        #ner_as_str += f"\n\nBody parts and anatomy:\n{body_parts}"
+        #ner_as_str += f"\nChemical entities and pharmacological substances:\n{chem_entities}"
+        #ner_as_str += f"\nPathologic conditions:\n{pathologic_conditions}"
+        #ner_as_str += f"\nDiagnostic and therapeutic procedures:\n{procedures}"
+        #ner_as_str += f"\n\n\nGeneric NER:\n{str(generic_ner_result)}"
+        #ner_as_str += f"\n\nIdentified names:\n{names}"
+        #output_as_str = f"\nElectronic health record:\n{message.to_er7(trailing_children=True)}\n\nNamed-entity recognition:\n{ner_as_str}\n\n"
         output_as_dict = {
             'output': message.to_er7(trailing_children=True),
             'ner': [
                 {
                     'name': 'clinical',
-                    'result': clinical_ner_result,
-                    'tags': 
+                    'result': str(clinical_ner_result),
+                    'tags':
                         [
                             {
                                 'name': 'ANAT',
@@ -127,8 +127,8 @@ class DefaultADT_A01():
                 },
                 {
                     'name': 'generic',
-                    'result': generic_ner_result,
-                    'tags': 
+                    'result': str(generic_ner_result),
+                    'tags':
                         [
                             {
                                 'name': 'LOC',
@@ -198,8 +198,12 @@ class DefaultADT_A01():
                 identified_tags.append(
                     text[dictionary["start"]:dictionary["end"]])
             if dictionary["entity"] == f"I-{tag}":
-                identified_tags[-1] += " " + \
-                    (text[dictionary["start"]:dictionary["end"]])
+                if len(identified_tags) > 0:
+                    identified_tags[-1] += " " + \
+                        (text[dictionary["start"]:dictionary["end"]])
+                else:
+                    identified_tags.append(
+                        text[dictionary["start"]:dictionary["end"]])
         return identified_tags
 
 
