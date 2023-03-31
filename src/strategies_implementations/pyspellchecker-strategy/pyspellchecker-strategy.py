@@ -17,16 +17,20 @@ class UsingPySpellChecker():
         :rtype: str
         """
         spanish_spell_checker = SpellChecker(language="es")
-        spell_checked_text = " ".join(
-            [spanish_spell_checker.correction(token) for token in text.split()])
+        split_text = text.split()
+        corrected_text = [spanish_spell_checker.correction(token) if spanish_spell_checker.correction(token) is not None else token for token in split_text]
+        spell_checked_text = " ".join(corrected_text)
+
         return {'output': spell_checked_text}
 
 
 if __name__ == '__main__':
     # Get strategy input
-    strategy_input = sys.argv[1]
+    standard_input = input()
+    input_dict = json.loads(standard_input)
+    strategy_input = input_dict['input']
     # Run execute command
-    strategy_output = UsingPySpellChecker.execute(strategy_input)
+    strategy_output = UsingPySpellChecker.execute(text=strategy_input)
     # Serialize the output
     serialized_output = json.dumps(strategy_output)
     # Return serialized output through stdout

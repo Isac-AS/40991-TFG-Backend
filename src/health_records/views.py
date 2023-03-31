@@ -187,6 +187,7 @@ def run_pipeline(pipeline_id, skip_steps, strategy_input):
         db.select(Pipeline).filter_by(id=pipeline_id)).scalar_one()
     # Step skipping
     strategies_to_run = pipeline.strategies[skip_steps:]
+    print(f"[DEBUG] - Strategies to run: {strategies_to_run}")
     # Get first input
     pipeline_output = []
     for strategy in strategies_to_run:
@@ -223,17 +224,25 @@ def run_strategy(strategy_input, strategy_id):
         db.select(Strategy).filter_by(id=strategy_id)).scalar_one()
 
     # Run strategy as subprocess
-    process = subprocess.Popen([strategy.env_path, strategy.python_file_path,
-                               strategy_input], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    # As JSON will be used to pass dictionary objects, the text_mode of the underlying object is true.
+    process = subprocess.Popen([strategy.env_path, strategy.python_file_path],
+                               stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+    # Prepare the strategy input
+    strategy_input_dict = {'input': strategy_input}
+    serialized_input_dict = json.dumps(strategy_input_dict)
+
     # Wait for the process to finish
-    stdout, stderr = process.communicate()
-    # Get the output
-    # serialized_output = stdout.strip()
-    serialized_output = stdout.decode("utf-8")
+    stdout, stderr = process.communicate(input=serialized_input_dict)
+
     try:
-        strategy_output = json.loads(serialized_output)
+        strategy_output = json.loads(stdout)
     except Exception:
+        print(
+            f"\n\n[ERROR] - Couldn't load output of the strategy: '{strategy.as_dict()['name']}'")
+        print(f"[ERROR] - Traceback:")
         print(traceback.print_exc())
+        print(f"\n[ERROR] - Stderr:\n{stderr}")
         strategy_output = {'output': 'Error durante esta estrategia'}
 
     # Print debugging info

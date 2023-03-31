@@ -38,8 +38,8 @@ class Pipeline(db.Model):
             'strategies': self.strategies,
 
             'id': self.id,
-            'created_at': self.created_at,
-            'updated_at': self.updated_at,
+            'created_at': self.created_at.strftime("%Y/%m/%d - %X"),
+            'updated_at': self.updated_at.strftime("%Y/%m/%d - %X"),
             'created_by': self.created_by,
             'last_modified_by': self.last_modified_by,
         }

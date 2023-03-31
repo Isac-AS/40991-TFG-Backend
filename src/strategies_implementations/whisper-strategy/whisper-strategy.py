@@ -28,7 +28,9 @@ class WhisperSpeechToTextStrategy():
 
 if __name__ == '__main__':
     # Get strategy input
-    strategy_input = sys.argv[1]
+    standard_input = input()
+    input_dict = json.loads(standard_input)
+    strategy_input = input_dict['input']
     # Run execute command
     strategy_output = WhisperSpeechToTextStrategy.execute(strategy_input)
     # Serialize the output
