@@ -4,7 +4,7 @@ import pickle
 import subprocess
 import sys
 import traceback
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, send_file
 from datetime import datetime
 
 from flask_login import current_user
@@ -35,6 +35,12 @@ def save_audio():
     return jsonify({'result': True, 'message': "Audio guardado correctamente", "audio_file_path": audio_file_path})
 
 
+@health_record_bp.route("/health_records/retrieve_audio", methods=["POST"])
+def retrieve_audio():
+    audio_file_path = request.json.get('audio_file_path')
+    return send_file(audio_file_path, mimetype='audio/wav')
+
+
 @health_record_bp.route("/health_records/delete", methods=["POST"])
 def delete_health_record():
     # Get record id from the request
@@ -50,7 +56,7 @@ def delete_health_record():
     db.session.commit()
 
     response = jsonify(
-        {'result': True, 'message': f'Pipeline "{record.id}" eliminado con éxito.', 'pipeline': None})
+        {'result': True, 'message': f'EHR "{record.id}" eliminado con éxito.', 'pipeline': None})
     return response
 
 
