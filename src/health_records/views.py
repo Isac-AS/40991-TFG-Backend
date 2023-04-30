@@ -45,18 +45,18 @@ def retrieve_audio():
 def delete_health_record():
     # Get record id from the request
     record_id = request.json.get('id')
-    # Find the pipeline in the database
+    # Find the record in the database
     record: HealthRecord = db.session.execute(
         db.select(HealthRecord).filter_by(id=record_id)).scalar_one()
     # Delete the recording if it is a parent record
     if record.parent_id is None:
         os.remove(record.recording_path)
-    # Delete the pipeline
+    # Delete the record
     db.session.delete(record)
     db.session.commit()
 
     response = jsonify(
-        {'result': True, 'message': f'EHR "{record.id}" eliminado con éxito.', 'pipeline': None})
+        {'result': True, 'message': f'EHR "{record.id}" eliminado con éxito.', 'record': None})
     return response
 
 
