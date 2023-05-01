@@ -25,14 +25,42 @@ def get_all_strategies():
     return response
 
 
-@strategies_bp.route("/strategies/read", methods=["POST"])
-def get_strategy():
-    pass
-
-
 @strategies_bp.route("/strategies/update", methods=["POST"])
 def update_strategy():
-    pass
+    # Get the modified strategy
+    request_strategy = request.json.get('strategy')
+
+    try:
+        # Find the strategy entry in the database
+        strategy: Strategy = db.session.execute(
+            db.select(Strategy).filter_by(id=request_strategy['id'])).scalar_one()
+    except Exception as e:
+        print(f"[ERROR] - [UPDATE STRATEGY QUERY]:\n{e}\n")
+        response = jsonify(
+            {'result': False, 'message': 'Strategy not found.', 'strategy': None})
+        return response
+
+    # Update the database entry
+    strategy.name = request_strategy['name']
+    strategy.description = request_strategy['description']
+    strategy.input_type = request_strategy['input_type']
+    strategy.output_type = request_strategy['output_type']
+    strategy.stage = request_strategy['stage']
+    strategy.last_modified_by = current_user.username
+    strategy.updated_at = datetime.now()
+
+    try:
+        # Commiting will update the entry
+        db.session.commit()
+    except Exception as e:
+        print(f"[ERROR] - [UPDATE STRATEGY COMMIT]:\n{e}\n")
+        response = jsonify(
+            {'result': False, 'message': 'Database error, could not commit.', 'strategy': None})
+        return response
+
+    response = jsonify(
+        {'result': True, 'message': 'Strategy updated successfully.', 'strategy': strategy.as_dict()})
+    return response
 
 
 @strategies_bp.route("/strategies/delete", methods=["POST"])
@@ -128,7 +156,8 @@ def create_strategy():
         db.session.add(strategy)
         db.session.commit()
     except Exception as e:
-        print(f"[ERROR] - [STRATEGY CREATION DATABASE ACCESS]: Strategy not properly deleted:\n{e}\n")
+        print(
+            f"[ERROR] - [STRATEGY CREATION DATABASE ACCESS]: Strategy not properly deleted:\n{e}\n")
 
     response = jsonify(
         {'result': True, 'message': f'{strategy_dir}', 'strategy': strategy.as_dict()})
