@@ -1,4 +1,3 @@
-import json
 import os
 import shutil
 import venv
@@ -71,7 +70,7 @@ def delete_strategy():
     db.session.commit()
 
     response = jsonify(
-        {'result': True, 'message': f'Estrategia "{strategy_id.id}" eliminada con éxito.', 'strategy': None})
+        {'result': True, 'message': f'Estrategia eliminada con éxito.', 'strategy': None})
     return response
 
 
@@ -113,7 +112,7 @@ def create_strategy():
     # Attempt to create and config virtual environment
     venv_creation_result = create_virtual_env(strategy)
 
-    # Check venv creation
+    # Check venv creation result
     if venv_creation_result["result"] == False:
         if debug:
             print(
@@ -125,8 +124,11 @@ def create_strategy():
         return response
 
     # So far: strategy_dir and __init__.py created; py_file and requirements saved; venv created; all done!
-    db.session.add(strategy)
-    db.session.commit()
+    try:
+        db.session.add(strategy)
+        db.session.commit()
+    except Exception as e:
+        print(f"[ERROR] - [STRATEGY CREATION DATABASE ACCESS]: Strategy not properly deleted:\n{e}\n")
 
     response = jsonify(
         {'result': True, 'message': f'{strategy_dir}', 'strategy': strategy.as_dict()})
@@ -173,50 +175,29 @@ def build_strategy(strategy):
 
 
 def create_virtual_env(strategy):
-    # Venv creator script
-    venv_creator_path = "/opt/40991-TFG-Backend/src/venv_creator.py"
-    # A dummy venv is used to avoid staining the flask venv
-    interpreter_path = "/opt/40991-TFG-Backend/src/dummy-venv/bin/python"
     # Venv path
     env_dir = f'/opt/40991-TFG-Backend/src/strategies_implementations/{strategy.name}-strategy/{strategy.name}-venv'
     # Requirements file
     requirements_file = f'/opt/40991-TFG-Backend/src/strategies_implementations/{strategy.name}-strategy/requirements.txt'
 
-    # Input data preparation
-    input_dict = {'env_dir': env_dir, 'requirements_file': requirements_file}
-    # Serialize the dictionary
-    serialized_input_dict = json.dumps(input_dict)
-
-    process = subprocess.Popen([interpreter_path, venv_creator_path],
-                               stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-
-    # Wait for the process to finish
-    stdout, stderr = process.communicate(input=serialized_input_dict)
-
-    if debug:
-        print("[DEBUG] - [VENV-CREATION-STDOUT]:")
-        print(stdout)
+    try:
+        print("[DEBUG] - [VENV CREATION]: About to venv.create()")
+        # Virtual environment creation
+        venv.create(env_dir, with_pip=True)
+    except Exception as e:
+        print(f"[ERROR] - [ATTEMPTING VIRTUAL ENV CREATION]:\n{e}")
+        return {'result': False, 'message': "Error during virtual environment creation"}
 
     try:
-        split_stdout = stdout.split("\n")
-        print(split_stdout)
-        if len(split_stdout) > 1:
-            venv_creation_result = json.loads(split_stdout[-2])
-        else:
-            venv_creation_result = json.loads(split_stdout[0])
+        print("[DEBUG] - [DEPENDENCY INSTALL]: About to subprocess.run")
+        # Install dependencies
+        subprocess.run([f"{env_dir}/bin/pip", "install",
+                       "-r", requirements_file], check=True)
     except Exception as e:
-        print(f"\n[ERROR] - [FINAL-STEP-OF-VENV-CREATION]: Stdout:\n{stdout}")
-        print(f"\n[ERROR] - [FINAL-STEP-OF-VENV-CREATION]: Stderr:\n{stderr}")
-        error_message = f"\n[ERROR] - [FINAL-STEP-OF-VENV-CREATION]: Caught exception:\n{e}\n"
-        print(error_message)
-        venv_creation_result = {'result': False,
-                                'message': "Unknown Error, check output."}
+        print(f"[ERROR] - [ATTEMPTING DEPENDENCY INSTALLATION]:\n{e}")
+        return {'result': False, 'message': "Error during dependency installation"}
 
-    if (debug):
-        debug_message = f"\n[DEBUG] - [VENV-CREATION-RESULT]: This is the result of the json.loads(stdout):\n{venv_creation_result}\n"
-        print(debug_message)
-
-    return venv_creation_result
+    return {'result': True, 'message': "Virtual environment created successfully!"}
 
 
 def delete_strategy_dir(strategy_dir):
