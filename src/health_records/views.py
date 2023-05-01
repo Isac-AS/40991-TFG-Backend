@@ -60,14 +60,39 @@ def delete_health_record():
     return response
 
 
-@health_record_bp.route("/health_records/read", methods=["POST"])
-def get_health_record():
-    pass
-
-
 @health_record_bp.route("/health_records/update", methods=["POST"])
 def update_health_record():
-    pass
+    # Get the modified record
+    request_record = request.json.get('healthRecord')
+
+    try:
+        # Find the record entry in the database
+        record: HealthRecord = db.session.execute(
+            db.select(HealthRecord).filter_by(id=request_record['id'])).scalar_one()
+    except Exception as e:
+        print(f"[ERROR] - [UPDATE RECORD QUERY]:\n{e}\n")
+        response = jsonify(
+            {'result': False, 'message': 'Record not found.', 'healthRecord': None})
+        return response
+
+    # Update the database entry
+    record.health_record = request_record['health_record']
+    record.transcription = request_record['transcription']
+    record.last_modified_by = current_user.username
+    record.updated_at = datetime.now()
+
+    try:
+        # Commiting will update the entry
+        db.session.commit()
+    except Exception as e:
+        print(f"[ERROR] - [UPDATE RECORD COMMIT]:\n{e}\n")
+        response = jsonify(
+            {'result': False, 'message': 'Database error, could not commit.', 'healthRecord': None})
+        return response
+
+    response = jsonify(
+        {'result': True, 'message': 'Record updated successfully.', 'healthRecord': record.as_dict()})
+    return response
 
 
 @health_record_bp.route("/health_records/create_from_audio", methods=["POST"])
