@@ -25,7 +25,7 @@ class User(UserMixin, db.Model):
         self.username = username
         self.email = email
         self.role = role
-        self.password = bcrypt.generate_password_hash(password).decode('utf-8')
+        self.password = bcrypt.generate_password_hash(password,rounds=5).decode('utf-8')
         self.created_at = datetime.now()
         self.updated_at = datetime.now()
         self.is_admin = is_admin
