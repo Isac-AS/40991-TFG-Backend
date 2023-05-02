@@ -21,6 +21,7 @@ def test_pipeline_creation(client, test_pipeline: Pipeline, login):
     print(f"\nResponse:\n{response}\n")
     assert True in response.data
 
+
 def test_pipeline_get_all(client, test_pipeline):
     """
     GIVEN a Flask application configured for testing

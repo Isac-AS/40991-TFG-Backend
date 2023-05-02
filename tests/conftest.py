@@ -9,7 +9,6 @@ from flask_login import login_user
 
 @pytest.fixture()
 def app():
-    
     # Setup can go here
     with flask_app.app_context():
         # Create all database models
@@ -33,8 +32,8 @@ def app():
     with flask_app.app_context():
         db.session.remove()
         db.drop_all()
-        #testdb_path = "/opt/40991-TFG-Backend/instance/testdb.sqlite"
-        #os.remove(testdb_path)
+        # testdb_path = "/opt/40991-TFG-Backend/instance/testdb.sqlite"
+        # os.remove(testdb_path)
 
 
 @pytest.fixture()
@@ -42,12 +41,13 @@ def client(app):
     return flask_app.test_client()
 
 
-@pytest.fixture(scope="function")
+"""@pytest.fixture(scope="function")
 def login(app):
     with flask_app.app_context():
         email = "ad@min.com"
-        user: User = db.session.execute(db.select(User).filter_by(email=email)).scalar_one()
-        login_user(user)
+        user: User = db.session.execute(
+            db.select(User).filter_by(email=email)).scalar_one()
+        login_user(user)"""
 
 
 @pytest.fixture(scope="module")

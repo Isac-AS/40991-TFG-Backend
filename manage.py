@@ -1,7 +1,7 @@
+import getpass
 from flask.cli import FlaskGroup
 from src.accounts.models import User
-import getpass
-import unittest
+from restore_strategies import restore_strategies
 
 from src import app, db
 
@@ -14,6 +14,14 @@ def create_all():
     Creates all database relations
     """
     db.create_all()
+
+
+@cli.command("emergency_restore")
+def emergency_restore():
+    """
+    Will create by hand the four basic strategies
+    """
+    restore_strategies()
 
 
 @cli.command("create_admin")
@@ -44,18 +52,6 @@ def create_admin():
     except Exception as e:
         print(e)
         print("Couldn't create admin user")
-
-
-@cli.command("test")
-def test():
-    """Runs the unit tests without coverage."""
-    tests = unittest.TestLoader().discover("tests")
-    result = unittest.TextTestRunner(verbosity=2).run(tests)
-    if result.wasSuccessful():
-        return 0
-    else:
-        return 1
-
 
 if __name__ == "__main__":
     cli()
