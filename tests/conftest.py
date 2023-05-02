@@ -1,3 +1,4 @@
+import os
 import pytest
 from src import app as flask_app
 from src import db
@@ -8,8 +9,7 @@ from flask_login import login_user
 
 @pytest.fixture()
 def app():
-    app = flask_app.config.from_object("config.TestingConfig")
-
+    
     # Setup can go here
     with flask_app.app_context():
         # Create all database models
@@ -33,7 +33,8 @@ def app():
     with flask_app.app_context():
         db.session.remove()
         db.drop_all()
-    # testdb_path = "/opt/40991-TFG-Backend/instance/testdb.sqlite"
+        #testdb_path = "/opt/40991-TFG-Backend/instance/testdb.sqlite"
+        #os.remove(testdb_path)
 
 
 @pytest.fixture()
