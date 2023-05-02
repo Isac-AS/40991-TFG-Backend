@@ -9,22 +9,11 @@ from flask_login import login_user
 
 @pytest.fixture()
 def app():
+    app = flask_app
     # Setup can go here
     with flask_app.app_context():
         # Create all database models
         db.create_all()
-        # Create a user
-        example_user = User(
-            username="test_admin",
-            password="admin_user",
-            email="ad@min.com",
-            role=10,
-            created_by="cli",
-            last_modified_by="cli",
-            is_admin=True,
-        )
-        db.session.add(example_user)
-        db.session.commit()
 
     yield app
 
@@ -40,23 +29,16 @@ def app():
 def client(app):
     return flask_app.test_client()
 
+@pytest.fixture()
+def database(app):
+    return db
 
-"""@pytest.fixture(scope="function")
-def login(app):
+@pytest.fixture()
+def register(client):
     with flask_app.app_context():
-        email = "ad@min.com"
-        user: User = db.session.execute(
-            db.select(User).filter_by(email=email)).scalar_one()
-        login_user(user)"""
-
-
-@pytest.fixture(scope="module")
-def test_pipeline():
-    pipeline = Pipeline(
-        name="test_pipeline",
-        description="test_pipeline_description",
-        strategies=[],
-        created_by="test",
-        last_modified_by="test"
-    )
-    return pipeline
+        client.post("/register", json={
+            "username": "test_user",
+            "email": "test@user.com",
+            "role": 1,
+            "password": "test_user"
+        })
