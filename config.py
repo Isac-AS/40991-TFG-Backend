@@ -40,3 +40,4 @@ class TestingConfig(Config):
 class ProductionConfig(Config):
     DEBUG = False
     DEBUG_TB_ENABLED = False
+    WTF_CSRF_ENABLED = False
