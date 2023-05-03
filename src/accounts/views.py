@@ -46,11 +46,6 @@ def modify_user():
     request_user = request.json.get('user')
     # Find the user in the database
     user: User = db.session.execute(db.select(User).filter_by(id = request_user['id'])).scalar_one()
-    # Mail validation
-    email_validation = db.session.execute(db.select(User).where(User.email == request_user['email']))
-    if len(email_validation.all()) > 0:
-        response = jsonify({'result': False, 'message': 'Ya existe un usuario con este correo.', 'user': None})
-        return response
     # Update the database selected user fields
     user.username = request_user['username']
     user.password = bcrypt.generate_password_hash(request_user['password']).decode('utf-8')
