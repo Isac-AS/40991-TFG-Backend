@@ -26,7 +26,9 @@ def test_pipeline_creation(client, test_pipeline: Pipeline, register):
     })
     parsed_response = json.loads(response.data)
     result = parsed_response["result"]
+    response_pipeline = parsed_response["pipeline"]
     assert True == result
+    assert response_pipeline["name"] == "test_pipeline"
 
 
 def test_pipeline_creation_and_retrieval(client, test_pipeline: Pipeline, register):
@@ -106,3 +108,46 @@ def test_pipeline_deletion(client, test_pipeline: Pipeline, register):
     pipeline_retrieval_response = client.get("/pipelines/get_all")
     parsed_retrieval_response = json.loads(pipeline_retrieval_response.data)
     assert len(parsed_retrieval_response) == 0
+
+
+def test_unsuccessful_pipeline_creation(client, test_pipeline: Pipeline, register):
+    """
+    GIVEN a Flask application configured for testing
+    WHEN a new Pipeline is created with the same name as an already existing pipeline
+    THEN check the answer received from the backend is negative
+    """
+    client.post("/pipelines/create", json={
+        "pipeline": test_pipeline.as_dict()
+    })
+    response = client.post("/pipelines/create", json={
+        "pipeline": test_pipeline.as_dict()
+    })
+    parsed_response = json.loads(response.data)
+    result = parsed_response["result"]
+    assert False == result
+
+
+def test_unsuccessful_pipeline_update(client, test_pipeline: Pipeline, register):
+    """
+    GIVEN a Flask application configured for testing
+    WHEN a new Pipeline is updated with a wrong id
+    THEN check the answer received from the backend is negative
+    """
+    pipeline_creation_response = client.post("/pipelines/create", json={
+        "pipeline": test_pipeline.as_dict()
+    })
+    parsed_creation_response = json.loads(pipeline_creation_response.data)
+    creation_result = parsed_creation_response["result"]
+    assert True == creation_result
+
+    # Pipeline modification
+    test_pipeline_2 = parsed_creation_response["pipeline"]
+    test_pipeline_2["name"] = "test_pipeline_2"
+    test_pipeline_2["id"] = 5
+    pipeline_modification_response = client.post("/pipelines/update", json={
+        "pipeline": test_pipeline_2
+    })
+    parsed_modification_response = json.loads(
+        pipeline_modification_response.data)
+    modification_result = parsed_modification_response["result"]
+    assert False == modification_result

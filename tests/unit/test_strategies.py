@@ -64,3 +64,60 @@ def test_strategy_update_and_retrieval(client, test_strategy: Strategy, register
     parsed_retrieval_response = json.loads(strategy_retrieval_response.data)
     assert len(parsed_retrieval_response) > 0
     assert parsed_retrieval_response[0]["name"] == "test_strategy_2"
+
+
+def test_unsuccessful_strategy_update(client, test_strategy: Strategy):
+    """
+    GIVEN a Flask application configured for testing
+    WHEN a new Strategy is updated with a wrong id
+    THEN check the answer received from the backend is negative
+    """
+    # Strategy retrieval
+    strategy_retrieval_response = client.get("/strategies/get_all")
+    parsed_retrieval_response = json.loads(strategy_retrieval_response.data)
+    assert len(parsed_retrieval_response) > 0
+    assert parsed_retrieval_response[0]["name"] == "test_strategy"
+
+    # Strategy modification
+    test_strategy_2 = parsed_retrieval_response[0]
+    test_strategy_2["name"] = "test_strategy_2"
+    test_strategy_2["id"] = 5
+    strategy_modification_response = client.post("/strategies/update", json={
+        "strategy": test_strategy_2
+    })
+    parsed_modification_response = json.loads(
+        strategy_modification_response.data)
+    modification_result = parsed_modification_response["result"]
+    assert False == modification_result
+
+
+def test_unsuccessful_strategy_deletion_by_id(client, test_strategy: Strategy):
+    """
+    GIVEN a Flask application configured for testing
+    WHEN a nonexistent id is passed
+    THEN check the answer received from the backend is negative
+    """
+    # Strategy deletion attempt
+    strategy_deletion_response = client.post("/strategies/delete", json={
+        "id": 5
+    })
+    parsed_deletion_response = json.loads(
+        strategy_deletion_response.data)
+    deletion_result = parsed_deletion_response["result"]
+    assert False == deletion_result
+
+
+def test_unsuccessful_strategy_deletion_by_path(client, test_strategy: Strategy):
+    """
+    GIVEN a Flask application configured for testing
+    WHEN the strategy path does not exist
+    THEN check the answer received from the backend is negative
+    """
+    # Strategy deletion attempt
+    strategy_deletion_response = client.post("/strategies/delete", json={
+        "id": 1
+    })
+    parsed_deletion_response = json.loads(
+        strategy_deletion_response.data)
+    deletion_result = parsed_deletion_response["result"]
+    assert False == deletion_result
