@@ -17,7 +17,10 @@ testing_bp = Blueprint("testing", __name__)
 
 @testing_bp.route("/api/test", methods=["GET", "POST"])
 def random_testing():
-    
+    return jsonify({"ping": "pong!"})
+
+@testing_bp.route("/api/test/get", methods=["GET"])
+def ping_with_only_get():
     return jsonify({"ping": "pong!"})
 
 
