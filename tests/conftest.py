@@ -1,10 +1,6 @@
-import os
 import pytest
 from src import app as flask_app
 from src import db
-from src.accounts.models import User
-from src.pipelines.models import Pipeline
-from flask_login import login_user
 
 
 @pytest.fixture()
