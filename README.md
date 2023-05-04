@@ -17,6 +17,8 @@ La instalación manual es completada ejecutando el comando:
 git clone https://github.com/Isac-AS/40991-TFG-Backend.git
 ~~~
 
+Es indispensable tener un contenedor con la base de datos postgres en ejecución cuya conexión se haga a través del puerto 5432.
+
 # 3. Ejecución
 Existen tres modos de ejecución disponible haciendo uso de los ficheros ".bash" visibles en el directorio. En consecuencia, es necesario estar
 en un entorno Linux o sobre un intérprete bash. Asegúrese que los ficheros tienen permisos de ejecución.
