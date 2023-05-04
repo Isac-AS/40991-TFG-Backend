@@ -1,9 +1,3 @@
--[Introducción](#Introducción)
-
--[Setup](#Setup)
-
--[Ejecución](#Ejecución)
-
 # 1. Introducción
 Este respositorio se corresponde con la aplicación Python-Flask empleada para la gestión y lógica el sistema de gestión de registros 
 médicos procesados con inteligencia artifical.
