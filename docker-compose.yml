@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  frontend:
+    image: isacas/tfg-frontend
+    ports:
+      - 6000:6000
+    container_name: tfg-frontend
+    command: "tail -f /dev/null"
+
+  backend:
+    image: isacas/tfg-backend
+    ports:
+     - 9000:5000
+    container_name: tfg-backend
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: tfg-db
+    command: "tail -f /dev/null"
+
+  postgres_database:
+    image: postgres
+    ports:
+      - 5432:5432
+    container_name: tfg-postgres-db
+    environment:
+      POSTGRES_DB: tfg-db
+      POSTGRES_PASSWORD: pass
+    
